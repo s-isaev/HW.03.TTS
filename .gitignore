@@ -1,0 +1,6 @@
+LJSpeech-1.1
+LJSpeech-1.1.tar.bz2
+*.pyc
+waveglow_256channels_universal_v5.pt
+waveglow
+*.wav
