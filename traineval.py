@@ -46,6 +46,7 @@ def train(epochs=50, datapath='.', batch_size=3):
             text = text.replace("â", "")
             text = text.replace("\"", "")
             text = text.replace("é", "")
+            text = text.replace("ü", "")
             transcript_new.append(text)
         batch.transcript = transcript_new
 
