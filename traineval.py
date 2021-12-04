@@ -14,9 +14,9 @@ from vocoder import Vocoder
 import soundfile as sf
 import scipy.io.wavfile
 
-def train(epochs=50):
+def train(epochs=50, datapath='.'):
     featurizer = MelSpectrogram(MelSpectrogramConfig())
-    dataset = LJSpeechDataset('.')
+    dataset = LJSpeechDataset(datapath)
     collator = LJSpeechCollator()
     dataloader = DataLoader(dataset, batch_size=3, collate_fn=collator)
 
@@ -103,9 +103,9 @@ def train(epochs=50):
 
     return model, mels
 
-def eval(model, device):
+def eval(model, device, datapath='.'):
     featurizer = MelSpectrogram(MelSpectrogramConfig())
-    dataset = LJSpeechDataset('.')
+    dataset = LJSpeechDataset(datapath)
     collator = LJSpeechCollator()
     dataloader = DataLoader(dataset, batch_size=3, collate_fn=collator)
 
