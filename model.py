@@ -25,9 +25,35 @@ class TransformerBlock(nn.Module):
     def __init__(self, hidden_size) -> None:
         super(TransformerBlock, self).__init__()
 
-        self.net = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2), 
-            num_layers=2
+        self.attention = nn.MultiheadAttention(
+            embed_dim=hidden_size,
+            num_heads=2
+        )
+        self.lnorm1 = nn.LayerNorm(hidden_size)
+        self.conv = nn.Conv1d(
+            in_channels=hidden_size,
+            out_channels=hidden_size,
+            kernel_size=11,
+            padding='same'
+        )
+        self.lnorm2 = nn.LayerNorm(hidden_size)
+
+    def forward(self, x):
+        x = self.attention(x, x, x)[0] + x
+        x = self.lnorm1(x)
+        x = self.conv(x.transpose(1,2)).transpose(1,2) + x
+        x = self.lnorm2(x)
+
+        return x
+
+
+class TransformerBlocks(nn.Module):
+    def __init__(self, hidden_size) -> None:
+        super(TransformerBlocks, self).__init__()
+
+        self.net = nn.Sequential(
+            TransformerBlock(),
+            TransformerBlock()
         )
 
     def forward(self, x):
