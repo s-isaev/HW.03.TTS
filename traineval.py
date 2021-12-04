@@ -14,11 +14,12 @@ from vocoder import Vocoder
 import soundfile as sf
 import scipy.io.wavfile
 
-def train(epochs=50, datapath='.'):
+def train(epochs=50, datapath='.', batch_size=3):
     featurizer = MelSpectrogram(MelSpectrogramConfig())
     dataset = LJSpeechDataset(datapath)
     collator = LJSpeechCollator()
-    dataloader = DataLoader(dataset, batch_size=3, collate_fn=collator)
+    dataloader = DataLoader(
+        dataset, batch_size=batch_size, collate_fn=collator)
 
     #dummy_batch = list(islice(dataloader, 1))[0]
 
