@@ -85,10 +85,10 @@ def train(epochs=50, datapath='.'):
         mels_alignations_log = torch.log(mels_alignations_log)
 
         if tokens.shape != mels_alignations.shape:
-            print(tokens.shpe)
+            print(tokens.shape)
             print(mels_alignations.shape)
             print(batch.transcript)
-            print(mels_alignations_predicted.shpape)
+            print(mels_alignations_predicted.shape)
         
 
         loss_mel_n = loss_mel(mels, mels_gt)
