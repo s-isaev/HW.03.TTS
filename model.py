@@ -53,6 +53,7 @@ class TransformerBlocks(nn.Module):
 
         self.net = nn.Sequential(
             TransformerBlock(),
+            TransformerBlock(),
             TransformerBlock()
         )
 
