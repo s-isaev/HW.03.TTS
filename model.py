@@ -2,6 +2,8 @@ import torch
 from torch import Tensor, nn
 import math
 
+from torch.nn.modules.conv import Conv1d
+
 class PositionalEncoding(nn.Module):
     def __init__(
         self, emb_size: int, dropout: float, maxlen: int = 5000):
@@ -20,6 +22,19 @@ class PositionalEncoding(nn.Module):
     def forward(self, token_embedding: Tensor):
         return self.dropout(token_embedding + self.pos_embedding[:token_embedding.size(0), :])
 
+class Conv(nn.Module):
+    def __init__(self, hidden_size) -> None:
+        super(Conv, self).__init__()
+
+        self.conv = nn.Conv1d(
+            in_channels=hidden_size,
+            out_channels=hidden_size,
+            kernel_size=3,
+            padding='same'
+        )
+
+    def forward(self, x):
+        return self.conv(x.transpose(1,2)).transpose(1,2)
 
 class TransformerBlock(nn.Module):
     def __init__(self, hidden_size) -> None:
@@ -30,19 +45,23 @@ class TransformerBlock(nn.Module):
             num_heads=2
         )
         self.lnorm1 = nn.LayerNorm(hidden_size)
-        self.conv = nn.Conv1d(
-            in_channels=hidden_size,
-            out_channels=hidden_size,
-            kernel_size=11,
-            padding='same'
-        )
+        self.relu1 = nn.ReLU()
+
+        self.conv1 = Conv(hidden_size=hidden_size)
+        self.relu2 = nn.ReLU()
+        self.conv2 = Conv(hidden_size=hidden_size)
+
         self.lnorm2 = nn.LayerNorm(hidden_size)
+        self.relu3 = nn.ReLU()
+
 
     def forward(self, x):
         x = self.attention(x, x, x)[0] + x
-        x = self.lnorm1(x)
-        x = self.conv(x.transpose(1,2)).transpose(1,2) + x
-        x = self.lnorm2(x)
+        x = self.relu1(self.lnorm1(x))
+
+        x = self.conv2(self.relu2(self.conv1(x))) + x
+
+        x = self.relu3(self.lnorm2(x))
 
         return x
 
@@ -67,29 +86,19 @@ class LengthRegulator(nn.Module):
         super(LengthRegulator, self).__init__()
 
         
-        self.conv1 = nn.Conv1d(
-            in_channels=hidden_size,
-            out_channels=hidden_size,
-            kernel_size=11,
-            padding='same'
-        )
+        self.conv1 = Conv(hidden_size=hidden_size)
         self.ln1 = nn.LayerNorm(hidden_size)
         self.relu1 = nn.ReLU()
 
-        self.conv2 = nn.Conv1d(
-            in_channels=hidden_size,
-            out_channels=hidden_size,
-            kernel_size=11,
-            padding='same'
-        )
+        self.conv2 = Conv(hidden_size=hidden_size)
         self.ln2 = nn.LayerNorm(hidden_size)
         self.relu2 = nn.ReLU()
         self.linear = nn.Linear(hidden_size, 1)
 
     def forward(self, x, token_nums, mels_alignations=None, mels_gt_num=None):
-        m = self.conv1(x.transpose(1,2)).transpose(1,2)
+        m = self.conv1(x)
         m = self.relu1(self.ln1(m))
-        m = self.conv2(m.transpose(1,2)).transpose(1,2)
+        m = self.conv2(x)
         m = self.relu2(self.ln2(m))
         m = self.linear(m).squeeze()
         for examle in range(x.shape[0]):
