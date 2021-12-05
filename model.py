@@ -73,9 +73,6 @@ class TransformerBlocks(nn.Module):
         self.net = nn.Sequential(
             TransformerBlock(),
             TransformerBlock(),
-            TransformerBlock(),
-            TransformerBlock(),
-            TransformerBlock(),
             TransformerBlock()
         )
 
@@ -152,7 +149,7 @@ class FastSpeech(nn.Module):
             emb_size=hidden_size, dropout=0.0
         )
 
-        self.encoder_fft = TransformerBlock(hidden_size=hidden_size)
+        self.encoder_fft = TransformerBlocks(hidden_size=hidden_size)
 
         self.length_regulator = LengthRegulator(hidden_size=hidden_size)
 
@@ -160,7 +157,7 @@ class FastSpeech(nn.Module):
             emb_size=hidden_size, dropout=0.0
         )
 
-        self.decoder_fft = TransformerBlock(hidden_size=hidden_size)
+        self.decoder_fft = TransformerBlocks(hidden_size=hidden_size)
 
         self.linear_layer = nn.Linear(hidden_size, n_mels)
 
