@@ -47,21 +47,17 @@ class TransformerBlock(nn.Module):
         self.lnorm1 = nn.LayerNorm(hidden_size)
         self.relu1 = nn.ReLU()
 
-        self.conv1 = Conv(hidden_size=hidden_size)
-        self.relu2 = nn.ReLU()
-        self.conv2 = Conv(hidden_size=hidden_size)
-
+        self.conv = Conv(hidden_size=hidden_size)
         self.lnorm2 = nn.LayerNorm(hidden_size)
-        self.relu3 = nn.ReLU()
+        self.relu2 = nn.ReLU()
 
 
     def forward(self, x):
         x = self.attention(x, x, x)[0] + x
         x = self.relu1(self.lnorm1(x))
 
-        x = self.conv2(self.relu2(self.conv1(x))) + x
-
-        x = self.relu3(self.lnorm2(x))
+        x = self.conv(x) + x
+        x = self.relu2(self.lnorm2(x))
 
         return x
 
