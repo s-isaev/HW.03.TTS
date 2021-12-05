@@ -55,7 +55,8 @@ def train_batch(model, batch, aligner, featurizer, optimizer, loss_mel, loss_len
 
     optimizer.zero_grad()
 
-    mels, mels_alignations_predicted = model(tokens, token_nums, mels_alignations, mels_gt_num)
+    mels, mels_alignations_predicted, mels_num_predicted = \
+        model(tokens, token_nums, mels_alignations, mels_gt_num)
 
     if tokens.shape != mels_alignations.shape:
         print(tokens.shape)
@@ -66,6 +67,8 @@ def train_batch(model, batch, aligner, featurizer, optimizer, loss_mel, loss_len
     mels_alignations_log = mels_alignations
     for examle in range(tokens.shape[0]):
         mels_alignations_log[examle][token_nums[examle]:] = 1.0
+        mels[examle][mels_gt_num[examle]:] = -10.0
+        mels_gt[examle][mels_gt_num[examle]:] = -10.0
     mels_alignations_log = torch.log(mels_alignations_log)
 
     loss_mel_n = loss_mel(mels, mels_gt)
@@ -178,7 +181,7 @@ def eval(model, device, datapath='.'):
 
 
     with torch.no_grad():
-        mels, mels_alignations_predicted = model(tokens, token_nums)
+        mels, mels_alignations_predicted, mels_num_predicted = model(tokens, token_nums)
 
         # loss_mel_n = loss_mel(mels, mels_gt)
         loss_len_n = loss_len(mels_alignations_predicted, mels_alignations)
@@ -187,7 +190,7 @@ def eval(model, device, datapath='.'):
 
     vocoder = Vocoder().to(device).eval()
     for i in range(mels.shape[0]):
-        mel = mels[i:i+1].transpose(1,2)
+        mel = mels[i:i+1,:mels_num_predicted[i]].transpose(1,2)
         wav = vocoder.inference(mel).cpu().numpy()
         print(wav[0])
         scipy.io.wavfile.write(str(i) + '.wav',22050, wav[0])

@@ -94,14 +94,16 @@ class LengthRegulator(nn.Module):
         m = self.linear(m).squeeze()
         for examle in range(x.shape[0]):
             m[examle][token_nums[examle]:] = 0.0
-        #print(m)
         mels_alignations_predicted = m
 
+        mels_alignations_predicted_exp = torch.exp(mels_alignations_predicted)
+        for examle in range(x.shape[0]):
+            mels_alignations_predicted_exp[examle][token_nums[examle]:] = 0.0
+        mels_num_predicted = mels_alignations_predicted_exp.sum(axis=1).long()
+
         if mels_alignations is None:
-            mels_alignations = torch.exp(mels_alignations_predicted)
-            for examle in range(x.shape[0]):
-                mels_alignations[examle][token_nums[examle]:] = 0.0
-            mels_gt_num = mels_alignations.sum(axis=1).long()
+            mels_alignations = mels_alignations_predicted_exp
+            mels_gt_num = mels_num_predicted
 
             print("mels alignations:", mels_alignations)
             print("mels gt num:", mels_gt_num)
@@ -121,7 +123,7 @@ class LengthRegulator(nn.Module):
                     x_new[examle][cur_mel] = x[examle][i]
                     cur_mel += 1
 
-        return x_new, mels_alignations_predicted
+        return x_new, mels_alignations_predicted, mels_num_predicted
 
 
 
@@ -154,9 +156,9 @@ class FastSpeech(nn.Module):
         x = self.embedding(tokens)
         x = self.fir_position_enc(x)
         x = self.encoder_fft(x)
-        x, mels_alignations_predicted = self.length_regulator(
+        x, mels_alignations_predicted, mels_num_predicted = self.length_regulator(
             x, token_nums, mels_alignations, mels_gt_num)
         x = self.sec_position_enc(x)
         x = self.decoder_fft(x)
         x = self.linear_layer(x)
-        return x, mels_alignations_predicted
+        return x, mels_alignations_predicted, mels_num_predicted
