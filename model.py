@@ -71,9 +71,9 @@ class TransformerBlocks(nn.Module):
         super(TransformerBlocks, self).__init__()
 
         self.net = nn.Sequential(
-            TransformerBlock(),
-            TransformerBlock(),
-            TransformerBlock()
+            TransformerBlock(hidden_size=hidden_size),
+            TransformerBlock(hidden_size=hidden_size),
+            TransformerBlock(hidden_size=hidden_size)
         )
 
     def forward(self, x):
