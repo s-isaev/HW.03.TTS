@@ -14,6 +14,8 @@ from vocoder import Vocoder
 import soundfile as sf
 import scipy.io.wavfile
 
+import tqdm
+
 def train(epochs=50, datapath='.', batch_size=3):
     featurizer = MelSpectrogram(MelSpectrogramConfig())
     dataset = LJSpeechDataset(datapath)
@@ -40,7 +42,10 @@ def train(epochs=50, datapath='.', batch_size=3):
     loss_mel = torch.nn.L1Loss().to(device)
     loss_len = torch.nn.MSELoss().to(device) 
 
-    for batch in dataloader:
+    iiter = 0
+    mell = 0
+    lenl = 0
+    for batch in tqdm.tqdm(dataloader):
         transcript_new = []
         for text in batch.transcript:
             text = text.replace("â", "")
@@ -49,6 +54,8 @@ def train(epochs=50, datapath='.', batch_size=3):
             text = text.replace("ü", "")
             text = text.replace("“", "")
             text = text.replace("”", "")
+            text = text.replace("[", "")
+            text = text.replace("]", "")
             transcript_new.append(text)
         batch.transcript = transcript_new
 
@@ -100,8 +107,15 @@ def train(epochs=50, datapath='.', batch_size=3):
         loss_mel_n = loss_mel(mels, mels_gt)
 
         loss_len_n = loss_len(mels_alignations_predicted, mels_alignations_log)
-        print("Mel:", loss_mel_n.item(), end=' ')
-        print("Len:", loss_len_n.item())
+
+        mell += loss_mel_n.item()
+        lenl += loss_len_n.item()
+        if iiter % 100 == 0:
+            print("Mel:", mell/100, end=' ')
+            print("Len:", lenl/100)
+            mell = 0
+            lenl = 0
+        iiter += 1
 
         loss = loss_mel_n + loss_len_n
         loss.backward()
