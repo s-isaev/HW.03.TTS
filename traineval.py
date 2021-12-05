@@ -42,84 +42,84 @@ def train(epochs=50, datapath='.', batch_size=3):
     loss_mel = torch.nn.L1Loss().to(device)
     loss_len = torch.nn.MSELoss().to(device) 
 
-    iiter = 0
-    mell = 0
-    lenl = 0
-    for batch in tqdm.tqdm(dataloader):
-        transcript_new = []
-        for text in batch.transcript:
-            text = text.replace("â", "")
-            text = text.replace("\"", "")
-            text = text.replace("é", "")
-            text = text.replace("ü", "")
-            text = text.replace("“", "")
-            text = text.replace("”", "")
-            text = text.replace("[", "")
-            text = text.replace("]", "")
-            transcript_new.append(text)
-        batch.transcript = transcript_new
+    for epoch in range(epochs):
+        iiter = 0
+        mell = 0
+        lenl = 0
+        for batch in tqdm.tqdm(dataloader):
+            transcript_new = []
+            for text in batch.transcript:
+                text = text.replace("â", "")
+                text = text.replace("\"", "")
+                text = text.replace("é", "")
+                text = text.replace("ü", "")
+                text = text.replace("“", "")
+                text = text.replace("”", "")
+                text = text.replace("[", "")
+                text = text.replace("]", "")
+                transcript_new.append(text)
+            batch.transcript = transcript_new
 
-        batch.durations = aligner(
-            batch.waveform.to(device), 
-            batch.waveforn_length, 
-            batch.transcript
-        )
-        tokens = batch.tokens.to(device)
-        mels_gt = featurizer(batch.waveform).cuda().transpose(1,2)
+            batch.durations = aligner(
+                batch.waveform.to(device), 
+                batch.waveforn_length, 
+                batch.transcript
+            )
+            tokens = batch.tokens.to(device)
+            mels_gt = featurizer(batch.waveform).cuda().transpose(1,2)
 
-        mels_gt_num = []
-        for i in range(batch.waveform.shape[0]):
-            wav = batch.waveform[i]
-            wav_len = batch.waveforn_length[i]
-            wav_len = wav_len.item()
-            mels_gt_num.append(featurizer(wav[:wav_len]).shape[1])
+            mels_gt_num = []
+            for i in range(batch.waveform.shape[0]):
+                wav = batch.waveform[i]
+                wav_len = batch.waveforn_length[i]
+                wav_len = wav_len.item()
+                mels_gt_num.append(featurizer(wav[:wav_len]).shape[1])
 
-        mels_alignations = batch.durations.to(device)
-        # print("Mels alignations shape before:", mels_alignations.shape)
-        mels_gt_num = torch.Tensor(mels_gt_num).to(device).long()
-        mels_alignations = (mels_alignations.T/mels_alignations.sum(axis=1)*mels_gt_num).T
-        token_nums = batch.token_lengths.to(device)
-        # print(mels_alignations[:, 110:])
+            mels_alignations = batch.durations.to(device)
+            # print("Mels alignations shape before:", mels_alignations.shape)
+            mels_gt_num = torch.Tensor(mels_gt_num).to(device).long()
+            mels_alignations = (mels_alignations.T/mels_alignations.sum(axis=1)*mels_gt_num).T
+            token_nums = batch.token_lengths.to(device)
+            # print(mels_alignations[:, 110:])
 
-        optimizer.zero_grad()
+            optimizer.zero_grad()
 
-        # print("Tokens:", tokens.shape)
-        # print("Mels gt num:", mels_gt_num)
-        # print("Token nums:", token_nums)
-        # print("Mels alignations shape", mels_alignations.shape)
+            # print("Tokens:", tokens.shape)
+            # print("Mels gt num:", mels_gt_num)
+            # print("Token nums:", token_nums)
+            # print("Mels alignations shape", mels_alignations.shape)
             
 
 
 
-        mels, mels_alignations_predicted = model(tokens, token_nums, mels_alignations, mels_gt_num)
-        mels_alignations_log = mels_alignations
-        for examle in range(tokens.shape[0]):
-            mels_alignations_log[examle][token_nums[examle]:] = 1.0
-        mels_alignations_log = torch.log(mels_alignations_log)
+            mels, mels_alignations_predicted = model(tokens, token_nums, mels_alignations, mels_gt_num)
+            mels_alignations_log = mels_alignations
+            for examle in range(tokens.shape[0]):
+                mels_alignations_log[examle][token_nums[examle]:] = 1.0
+            mels_alignations_log = torch.log(mels_alignations_log)
 
-        if tokens.shape != mels_alignations.shape:
-            print(tokens.shape)
-            print(mels_alignations.shape)
-            print(batch.transcript)
-            print(mels_alignations_predicted.shape)
+            if tokens.shape != mels_alignations.shape:
+                print(tokens.shape)
+                print(mels_alignations.shape)
+                print(batch.transcript)
+                print(mels_alignations_predicted.shape)
         
 
-        loss_mel_n = loss_mel(mels, mels_gt)
+            loss_mel_n = loss_mel(mels, mels_gt)
+            loss_len_n = loss_len(mels_alignations_predicted, mels_alignations_log)
 
-        loss_len_n = loss_len(mels_alignations_predicted, mels_alignations_log)
+            mell += loss_mel_n.item()
+            lenl += loss_len_n.item()
+            if iiter % 100 == 0:
+                print("Mel:", mell/100, end=' ')
+                print("Len:", lenl/100)
+                mell = 0
+                lenl = 0
+            iiter += 1
 
-        mell += loss_mel_n.item()
-        lenl += loss_len_n.item()
-        if iiter % 100 == 0:
-            print("Mel:", mell/100, end=' ')
-            print("Len:", lenl/100)
-            mell = 0
-            lenl = 0
-        iiter += 1
-
-        loss = loss_mel_n + loss_len_n
-        loss.backward()
-        optimizer.step()
+            loss = loss_mel_n + loss_len_n
+            loss.backward()
+            optimizer.step()
 
     return model, mels
 
