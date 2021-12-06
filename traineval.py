@@ -1,5 +1,5 @@
 import torch
-from itertools import islice
+from itertools import islice, product
 from torch._C import dtype
 from torch.nn.modules import loss
 from torch.utils.data import DataLoader
@@ -16,6 +16,7 @@ import scipy.io.wavfile
 
 import tqdm
 from copy import deepcopy
+import torchaudio
 
 def train_batch(model, batch, aligner, featurizer, optimizer, loss_mel, loss_len, device):
     model.train()
@@ -126,7 +127,7 @@ def train_checkpoint(steps=100, datapath='.'):
     return model, mels
 
 
-def train(epochs=50, datapath='.', batch_size=3):
+def train(epochs=50, datapath='.', batch_size=3, vocoder=None):
     device = torch.device('cuda:0')
     dataloader, model, aligner, featurizer, optimizer, loss_mel, loss_len = \
         prepare_model_loader_losses(
@@ -152,9 +153,20 @@ def train(epochs=50, datapath='.', batch_size=3):
                 lenl = 0
             i += 1
 
+        eval(model, device, datapath, vocoder)
+        infer(
+            model, vocoder, device,
+            [
+                'A defibrillator is a device that gives a high energy electric shock to the heart of someone who is in cardiac arrest',
+                'Massachusetts Institute of Technology may be best known for its math, science and engineering education',
+                'Wasserstein distance or Kantorovich Rubinstein metric is a distance function defined between probability distributions on a given metric space'
+            ], str(epoch)
+        )  
+
     return model, mels
 
-def eval(model, device, datapath='.'):
+def eval(model, device, datapath='.', vocoder=None):
+    model.eval()
     featurizer = MelSpectrogram(MelSpectrogramConfig())
     dataset = LJSpeechDataset(datapath)
     collator = LJSpeechCollator()
@@ -188,9 +200,19 @@ def eval(model, device, datapath='.'):
         # print("Mel:", loss_mel_n.item(), end=' ')
         print("Len:", loss_len_n.item())
 
-    vocoder = Vocoder().to(device).eval()
     for i in range(mels.shape[0]):
         mel = mels[i:i+1,:mels_num_predicted[i]].transpose(1,2)
         wav = vocoder.inference(mel).cpu().numpy()
         print(wav[0])
         scipy.io.wavfile.write(str(i) + '.wav',22050, wav[0])
+
+def infer(model, vocoder, device, texts = [], prefix=''):
+    model.eval()
+    tokenizer = torchaudio.pipelines.TACOTRON2_GRIFFINLIM_CHAR_LJSPEECH.get_text_processor()
+    for i, text in enumerate(texts):
+        tokens, tokens_num =  tokenizer(text)
+        with torch.no_grad():
+            mels, _, _ = model(tokens.to(device), tokens_num.to(device))
+        mel = mels.transpose(1,2)
+        wav = vocoder.inference(mel).cpu().numpy()
+        scipy.io.wavfile.write(prefix+'_'+str(i) + '.wav',22050, wav[0])

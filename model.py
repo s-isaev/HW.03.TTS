@@ -100,7 +100,7 @@ class LengthRegulator(nn.Module):
         m = self.relu1(self.ln1(m))
         m = self.conv2(x)
         m = self.relu2(self.ln2(m))
-        m = self.linear(m).squeeze()
+        m = self.linear(m).squeeze(2)
         for examle in range(x.shape[0]):
             m[examle][token_nums[examle]:] = 0.0
         mels_alignations_predicted = m
