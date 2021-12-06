@@ -68,8 +68,8 @@ class TransformerBlocks(nn.Module):
 
         self.net = nn.Sequential(
             nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
-            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
-            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
+            # nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
+            # nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
         )
 
     def forward(self, x):
