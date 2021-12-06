@@ -63,17 +63,17 @@ class TransformerBlock(nn.Module):
 
 
 class TransformerBlocks(nn.Module):
-    def __init__(self, hidden_size) -> None:
+    def __init__(self, hidden_size, n_layers) -> None:
         super(TransformerBlocks, self).__init__()
 
-        self.net = nn.Sequential(
-            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
-            # nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
-            # nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
-        )
+        self.layers = []
+        for i in range(n_layers):
+            self.layers.append(nn.TransformerEncoderLayer(d_model=hidden_size, batch_first=True, nhead=2))
 
     def forward(self, x):
-        return self.net(x)
+        for layer in self.layers:
+            x = layer(x)
+        return x
 
 
 class LengthRegulator(nn.Module):
@@ -145,7 +145,7 @@ class FastSpeech(nn.Module):
             emb_size=hidden_size
         )
 
-        self.encoder_fft = TransformerBlocks(hidden_size=hidden_size)
+        self.encoder_fft = TransformerBlocks(hidden_size=hidden_size, n_layers=2)
 
         self.length_regulator = LengthRegulator(hidden_size=hidden_size)
 
@@ -153,7 +153,7 @@ class FastSpeech(nn.Module):
             emb_size=hidden_size
         )
 
-        self.decoder_fft = TransformerBlocks(hidden_size=hidden_size)
+        self.decoder_fft = TransformerBlocks(hidden_size=hidden_size, n_layers=2)
 
         self.linear_layer = nn.Linear(hidden_size, n_mels)
 
