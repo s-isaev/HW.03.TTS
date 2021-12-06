@@ -66,6 +66,7 @@ class TransformerBlocks(nn.Module):
     def __init__(self, hidden_size) -> None:
         super(TransformerBlocks, self).__init__()
 
+        self.lnorm = nn.LayerNorm(hidden_size)
         self.net = nn.Sequential(
             TransformerBlock(hidden_size=hidden_size),
             TransformerBlock(hidden_size=hidden_size),
@@ -73,7 +74,7 @@ class TransformerBlocks(nn.Module):
         )
 
     def forward(self, x):
-        return self.net(x)
+        return self.net(self.lnorm(x))
 
 
 class LengthRegulator(nn.Module):
