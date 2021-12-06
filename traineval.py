@@ -91,7 +91,7 @@ def prepare_model_loader_losses(device, datapath='.', batch_size=3):
     dataloader = DataLoader(
         dataset, batch_size=batch_size, collate_fn=collator)
     aligner = GraphemeAligner().to(device)
-    model = FastSpeech(vocab_size=100, hidden_size=128, n_mels=80).to(device)
+    model = FastSpeech(vocab_size=100, hidden_size=256, n_mels=80).to(device)
     optimizer = torch.optim.Adam(model.parameters())
     loss_mel = torch.nn.L1Loss().to(device)
     loss_len = torch.nn.MSELoss().to(device)
