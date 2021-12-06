@@ -6,7 +6,7 @@ from torch.nn.modules.conv import Conv1d
 
 class PositionalEncoding(nn.Module):
     def __init__(
-        self, emb_size: int, dropout: float, maxlen: int = 5000):
+        self, emb_size: int, maxlen: int = 5000):
 
         super(PositionalEncoding, self).__init__()
         den = torch.exp(- torch.arange(0, emb_size, 2)* math.log(10000) / emb_size)
