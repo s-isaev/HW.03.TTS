@@ -67,7 +67,7 @@ class TransformerBlocks(nn.Module):
         super(TransformerBlocks, self).__init__()
 
         self.encoder = nn.TransformerEncoder(
-            TransformerBlock(d_model=hidden_size), 
+            TransformerBlock(hidden_size=hidden_size), 
             num_layers=2
         )
 
