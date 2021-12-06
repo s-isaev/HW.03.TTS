@@ -66,10 +66,7 @@ class TransformerBlocks(nn.Module):
     def __init__(self, hidden_size) -> None:
         super(TransformerBlocks, self).__init__()
 
-        self.encoder = nn.TransformerEncoder(
-            TransformerBlock(hidden_size=hidden_size), 
-            num_layers=2
-        )
+        self.encoder = TransformerBlock(hidden_size=hidden_size)
 
     def forward(self, x):
         return self.encoder(x)
