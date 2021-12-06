@@ -66,15 +66,14 @@ class TransformerBlocks(nn.Module):
     def __init__(self, hidden_size) -> None:
         super(TransformerBlocks, self).__init__()
 
-        self.lnorm = nn.LayerNorm(hidden_size)
         self.net = nn.Sequential(
-            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, norm_first=True, dropout=0.0),
-            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, norm_first=True, dropout=0.0),
-            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, norm_first=True, dropout=0.0),
+            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
+            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
+            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=2, batch_first=True, dropout=0.0),
         )
 
     def forward(self, x):
-        return self.net(self.lnorm(x))
+        return self.net(x)
 
 
 class LengthRegulator(nn.Module):
