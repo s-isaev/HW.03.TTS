@@ -16,11 +16,10 @@ class PositionalEncoding(nn.Module):
         pos_embedding[:, 1::2] = torch.cos(pos * den)
         pos_embedding = pos_embedding.unsqueeze(-2)
 
-        self.dropout = nn.Dropout(dropout)
         self.register_buffer('pos_embedding', pos_embedding)
 
     def forward(self, token_embedding: Tensor):
-        return self.dropout(token_embedding + self.pos_embedding[:token_embedding.size(0), :])
+        return token_embedding + self.pos_embedding[:token_embedding.size(0), :]
 
 class Conv(nn.Module):
     def __init__(self, hidden_size) -> None:
@@ -29,7 +28,7 @@ class Conv(nn.Module):
         self.conv = nn.Conv1d(
             in_channels=hidden_size,
             out_channels=hidden_size,
-            kernel_size=3,
+            kernel_size=5,
             padding='same'
         )
 
@@ -143,7 +142,7 @@ class FastSpeech(nn.Module):
         )
 
         self.fir_position_enc = PositionalEncoding(
-            emb_size=hidden_size, dropout=0.0
+            emb_size=hidden_size
         )
 
         self.encoder_fft = TransformerBlocks(hidden_size=hidden_size)
@@ -151,7 +150,7 @@ class FastSpeech(nn.Module):
         self.length_regulator = LengthRegulator(hidden_size=hidden_size)
 
         self.sec_position_enc = PositionalEncoding(
-            emb_size=hidden_size, dropout=0.0
+            emb_size=hidden_size
         )
 
         self.decoder_fft = TransformerBlocks(hidden_size=hidden_size)
