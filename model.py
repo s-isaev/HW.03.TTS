@@ -54,10 +54,10 @@ class TransformerBlock(nn.Module):
 
     def forward(self, x):
         x = self.attention(x, x, x)[0] + x
-        x = self.relu1(self.lnorm1(x))
+        x = self.lnorm1(x)
 
         x = self.conv(x) + x
-        x = self.relu2(self.lnorm2(x))
+        x = self.lnorm2(x)
 
         return x
 
