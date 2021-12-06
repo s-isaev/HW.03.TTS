@@ -70,10 +70,13 @@ class TransformerBlocks(nn.Module):
         self.relu1 = nn.ReLU()
         self.encoder2 = TransformerBlock(hidden_size=hidden_size)
         self.relu2 = nn.ReLU()
+        self.encoder3 = TransformerBlock(hidden_size=hidden_size)
+        self.relu3 = nn.ReLU()
 
     def forward(self, x):
         x = self.relu1(self.encoder1(x))
         x = self.relu2(self.encoder2(x))
+        x = self.relu3(self.encoder3(x))
         return x
 
 
