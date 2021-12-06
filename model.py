@@ -41,7 +41,8 @@ class TransformerBlock(nn.Module):
 
         self.attention = nn.MultiheadAttention(
             embed_dim=hidden_size,
-            num_heads=2
+            num_heads=2,
+            batch_first=True
         )
         self.lnorm1 = nn.LayerNorm(hidden_size)
         self.relu1 = nn.ReLU()
