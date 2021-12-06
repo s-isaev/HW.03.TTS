@@ -66,13 +66,12 @@ class TransformerBlocks(nn.Module):
     def __init__(self, hidden_size) -> None:
         super(TransformerBlocks, self).__init__()
 
-        self.t1 = nn.TransformerEncoderLayer(d_model=hidden_size, batch_first=True, nhead=2)
-        self.t2 = nn.TransformerEncoderLayer(d_model=hidden_size, batch_first=True, nhead=2)
+        self.encoder = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=hidden_size, batch_first=True, nhead=2), 
+            num_layers=2)
 
     def forward(self, x):
-        x = self.t1(x)
-        x = self.t2(x)
-        return x
+        return self.encoder(x)
 
 
 class LengthRegulator(nn.Module):
